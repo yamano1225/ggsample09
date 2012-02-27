@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstdlib>
 
 #include "gg.h"
 #include "matrix.h"
@@ -168,10 +169,10 @@ static void makeSphere(float radius, int slices, int stacks,
 static void init(void)
 {
   // ゲームグラフィックス特論の都合にもとづく初期化
-  ggInit();
+  gg::ggInit();
 
   // シェーダプログラムの読み込み
-  program = loadShader("simple.vert", "simple.frag", 0);
+  program = gg::loadShader("simple.vert", "simple.frag", 0);
 
   // attribute 変数のインデックスの検索（見つからなければ -1）
   pvLoc = glGetAttribLocation(program, "pv");
