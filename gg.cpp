@@ -182,7 +182,7 @@ static bool readShaderSource(GLuint shader, const char *name)
   else {
     // ファイルの末尾に移動し現在位置（＝ファイルサイズ）を得る
     file.seekg(0L, std::ios::end);
-    GLsizei length = file.tellg();
+    GLsizei length = static_cast<GLsizei>(file.tellg());
     
     // ファイルサイズのメモリを確保
     char *buffer = new GLchar[length];
@@ -380,7 +380,7 @@ void gg::loadImage(const char *name, int width, int height, GLenum format)
   else {
     // ファイルの末尾に移動し現在位置（＝ファイルサイズ）を得る
     file.seekg(0L, std::ios::end);
-    GLsizei size = file.tellg();
+    GLsizei size = static_cast<GLsizei>(file.tellg());
 
     // テクスチャサイズ分のメモリを確保する
     GLsizei maxsize = width * height * ((format == GL_RGB) ? 3 : 4);
@@ -434,7 +434,7 @@ void gg::loadHeight(const char *name, int width, int height, float nz)
   else {
     // ファイルの末尾に移動し現在位置（＝ファイルサイズ）を得る
     file.seekg(0L, std::ios::end);
-    GLsizei size = file.tellg();
+    GLsizei size = static_cast<GLsizei>(file.tellg());
     
     // メモリを確保する
     GLsizei maxsize = width * height;
