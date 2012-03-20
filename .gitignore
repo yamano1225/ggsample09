@@ -11,6 +11,7 @@ ggsample09
 #
 .DS_Store
 build/
+DerivedData/
 *.xcodeproj/*
 !project.pbxproj
 #
