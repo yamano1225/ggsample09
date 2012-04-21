@@ -270,7 +270,7 @@ GLuint gg::loadShader(
 
     // バーテックスシェーダ
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
-    if (!readShaderSource(vertShader, vert))
+    if (readShaderSource(vertShader, vert))
     {
       glDeleteShader(vertShader);
       glDeleteProgram(program);
@@ -293,7 +293,7 @@ GLuint gg::loadShader(
     if (frag)
     {
       GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-      if (!readShaderSource(fragShader, frag))
+      if (readShaderSource(fragShader, frag))
       {
         glDeleteShader(fragShader);
         glDeleteProgram(program);
@@ -317,7 +317,7 @@ GLuint gg::loadShader(
     if (geom)
     {
       GLuint geomShader = glCreateShader(GL_GEOMETRY_SHADER_EXT);
-      if (!readShaderSource(geomShader, geom))
+      if (readShaderSource(geomShader, geom))
       {
         glDeleteShader(geomShader);
         glDeleteProgram(program);
