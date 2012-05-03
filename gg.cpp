@@ -261,21 +261,25 @@ GLuint gg::loadShader(
   const char **varyings   // Transform Feedback する varying 変数のリスト
   )
 {
-  // プログラムオブジェクトの作成
+  // シェーダプログラムの作成
   GLuint program = glCreateProgram();
 
   if (program > 0)
   {
     GLint compiled, linked; // コンパイル結果, リンク結果
 
-    // バーテックスシェーダ
+    // バーテックスシェーダの作成
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
+    
+    // バーテックスシェーダのソースプログラムの読み込み
     if (readShaderSource(vertShader, vert))
     {
       glDeleteShader(vertShader);
       glDeleteProgram(program);
       return 0;
     }
+    
+    // バーテックスシェーダのコンパイル
     glCompileShader(vertShader);
     glGetShaderiv(vertShader, GL_COMPILE_STATUS, &compiled);
     printShaderInfoLog(vertShader);
@@ -286,19 +290,25 @@ GLuint gg::loadShader(
       glDeleteProgram(program);
       return 0;
     }
+    
+    // バーテックスシェーダシェーダプログラムへの組み込み
     glAttachShader(program, vertShader);
     glDeleteShader(vertShader);
 
-    // フラグメントシェーダ
     if (frag)
     {
+      // フラグメントシェーダの作成
       GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+      
+      // フラグメントシェーダのソースプログラムの読み込み
       if (readShaderSource(fragShader, frag))
       {
         glDeleteShader(fragShader);
         glDeleteProgram(program);
         return 0;
       }
+      
+      // フラグメントシェーダのコンパイル
       glCompileShader(fragShader);
       glGetShaderiv(fragShader, GL_COMPILE_STATUS, &compiled);
       printShaderInfoLog(fragShader);
@@ -309,20 +319,26 @@ GLuint gg::loadShader(
         glDeleteProgram(program);
         return 0;
       }
+      
+      // フラグメントシェーダシェーダプログラムへの組み込み
       glAttachShader(program, fragShader);
       glDeleteShader(fragShader);
     }
 
-    // ジオメトリシェーダ（オプション）
     if (geom)
     {
+      // ジオメトリシェーダの作成
       GLuint geomShader = glCreateShader(GL_GEOMETRY_SHADER_EXT);
+      
+      // ジオメトリシェーダのソースプログラムの読み込み
       if (readShaderSource(geomShader, geom))
       {
         glDeleteShader(geomShader);
         glDeleteProgram(program);
         return 0;
       }
+      
+      // ジオメトリシェーダのコンパイル
       glCompileShader(geomShader);
       glGetShaderiv(geomShader, GL_COMPILE_STATUS, &compiled);
       printShaderInfoLog(geomShader);
@@ -333,12 +349,18 @@ GLuint gg::loadShader(
         glDeleteProgram(program);
         return 0;
       }
+      
+      // ジオメトリシェーダのシェーダプログラムへの組み込み
       glAttachShader(program, geomShader);
       glDeleteShader(geomShader);
 
+      // ジオメトリシェーダに入力する基本図形の指定
       glProgramParameteriEXT(program, GL_GEOMETRY_INPUT_TYPE_EXT, input);
+      
+      // ジオメトリシェーダから出力する基本図形の指定
       glProgramParameteriEXT(program, GL_GEOMETRY_OUTPUT_TYPE_EXT, output);
 
+      // ジオメトリシェーダが出力する頂点数を出力可能な値に設定する
       int vertices;
       glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT, &vertices);
       glProgramParameteriEXT(program, GL_GEOMETRY_VERTICES_OUT_EXT, vertices);
@@ -462,10 +484,11 @@ void gg::loadHeight(const char *name, int width, int height, float nz)
       // 法線ベクトルの長さを求めておく
       float nl = sqrt(nx * nx + ny * ny + nz * nz);
       
+      // 法線ベクトルを求める
       nmap[i][0] = nx * 0.5f / nl + 0.5f;
       nmap[i][1] = ny * 0.5f / nl + 0.5f;
       nmap[i][2] = nz * 0.5f / nl + 0.5f;
-      nmap[i][3] = hmap[i] * 0.0039215686f;
+      nmap[i][3] = hmap[i] * 0.0039215686f; // = 1/255
     }
   }
   
