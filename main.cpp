@@ -2,6 +2,8 @@
 #include <cstdlib>
 
 #include "gg.h"
+using namespace gg;
+
 #include "matrix.h"
 
 // プログラムオブジェクト
@@ -169,10 +171,10 @@ static void makeSphere(float radius, int slices, int stacks,
 static void init(void)
 {
   // ゲームグラフィックス特論の都合にもとづく初期化
-  gg::ggInit();
+  ggInit();
 
   // シェーダプログラムの読み込み
-  program = gg::loadShader("simple.vert", "simple.frag", 0);
+  program = loadShader("simple.vert", "simple.frag", 0);
 
   // attribute 変数のインデックスの検索（見つからなければ -1）
   pvLoc = glGetAttribLocation(program, "pv");
