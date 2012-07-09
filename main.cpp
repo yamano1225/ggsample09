@@ -174,7 +174,7 @@ static void init(void)
   ggInit();
 
   // シェーダプログラムの読み込み
-  program = loadShader("simple.vert", "simple.frag", 0);
+  program = loadShader("simple.vert", "simple.frag");
 
   // attribute 変数のインデックスの検索（見つからなければ -1）
   pvLoc = glGetAttribLocation(program, "pv");
