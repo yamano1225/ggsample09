@@ -154,7 +154,8 @@ void rotate(GLfloat *r, float x, float y, float z, float a)
 {
   float d = sqrt(x * x + y * y + z * z);
   
-  if (d > 0.0f) {
+  if (d > 0.0f)
+  {
     float l  = x / d, m  = y / d, n  = z / d;
     float l2 = l * l, m2 = m * m, n2 = n * n;
     float lm = l * m, mn = m * n, nl = n * l;
@@ -212,9 +213,12 @@ bool inverse(GLfloat *m2, const GLfloat *m1)
   GLfloat lu[20], *plu[4], det;
   
   // j 行の要素の値の絶対値の最大値を plu[j][4] に求める
-  for (j = 0; j < 4; ++j) {
+  for (j = 0; j < 4; ++j)
+  {
     GLfloat max = fabs(*(plu[j] = lu + 5 * j) = *(m1++));
-    for (i = 0; ++i < 4;) {
+
+    for (i = 0; ++i < 4;)
+    {
       GLfloat a = fabs(plu[j][i] = *(m1++));
       if (a > max) max = a;
     }
@@ -225,50 +229,56 @@ bool inverse(GLfloat *m2, const GLfloat *m1)
   det = 1.0f;
   
   // ピボットを考慮した LU 分解
-  for (j = 0; j < 4; ++j) {
+  for (j = 0; j < 4; ++j)
+  {
     GLfloat max = fabs(plu[j][j] * plu[j][4]);
+
     i = j;
-    for (k = j; ++k < 4;) {
+
+    for (k = j; ++k < 4;)
+    {
       GLfloat a = fabs(plu[k][j] * plu[k][4]);
-      if (a > max) {
+      if (a > max)
+      {
         max = a;
         i = k;
       }
     }
     
-    if (i > j) {
+    if (i > j)
+    {
       GLfloat *t = plu[j];
       plu[j] = plu[i];
       plu[i] = t;
       det = -det;
     }
+
     if (plu[j][j] == 0.0) return false;
+
     det *= plu[j][j];
     
-    for (k = j; ++k < 4;) {
+    for (k = j; ++k < 4;)
+    {
       plu[k][j] /= plu[j][j];
-      for (i = j; ++i < 4;) {
-        plu[k][i] -= plu[j][i] * plu[k][j];
-      }
+
+      for (i = j; ++i < 4;) plu[k][i] -= plu[j][i] * plu[k][j];
     }
   }
   
   // 逆行列を求める
-  for (k = 0; k < 4; ++k) {
+  for (k = 0; k < 4; ++k)
+  {
     // m2 に単位行列を設定する
-    for (i = 0; i < 4; ++i) {
-      m2[i * 4 + k] = (plu[i] == lu + k * 5) ? 1.0f : 0.0f;
-    }
+    for (i = 0; i < 4; ++i) m2[i * 4 + k] = (plu[i] == lu + k * 5) ? 1.0f : 0.0f;
+
     // lu から逆行列を求める
-    for (i = 0; i < 4; ++i) {
-      for (j = i; ++j < 4;) {
-        m2[j * 4 + k] -= m2[i * 4 + k] * plu[j][i];
-      }
+    for (i = 0; i < 4; ++i)
+    {
+      for (j = i; ++j < 4;) m2[j * 4 + k] -= m2[i * 4 + k] * plu[j][i];
     }
-    for (i = 4; --i >= 0;){
-      for (j = i; ++j < 4;) {
-        m2[i * 4 + k] -= plu[i][j] * m2[j * 4 + k];
-      }
+    for (i = 4; --i >= 0;)
+    {
+      for (j = i; ++j < 4;) m2[i * 4 + k] -= plu[i][j] * m2[j * 4 + k];
       m2[i * 4 + k] /= plu[i][i];
     }
   }
@@ -282,7 +292,8 @@ bool inverse(GLfloat *m2, const GLfloat *m1)
 */
 void multiply(GLfloat *m, const GLfloat *m1, const GLfloat *m2)
 {
-  for (int i = 0; i < 16; ++i) {
+  for (int i = 0; i < 16; ++i)
+  {
     int j = i & 3, k = i & ~3;
     
     // 配列変数に行列が転置された状態で格納されていることを考慮している
@@ -311,7 +322,8 @@ void normalize(GLfloat *v2, const GLfloat *v1)
 {
   GLfloat l = v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2];
 
-  if (l > 0.0f) {
+  if (l > 0.0f)
+  {
     l = sqrt(l);
     
     v2[0] = v1[0] / l;

@@ -175,11 +175,13 @@ static bool readShaderSource(GLuint shader, const char *name)
   // ソースファイルを開く
   std::ifstream file(name, std::ios::binary);
 
-  if (file.fail()) {
+  if (file.fail())
+  {
     // 開けなかった
     std::cerr << "Error: Can't open source file: " << name << std::endl;
   }
-  else {
+  else
+  {
     // ファイルの末尾に移動し現在位置（＝ファイルサイズ）を得る
     file.seekg(0L, std::ios::end);
     GLsizei length = static_cast<GLsizei>(file.tellg());
@@ -191,7 +193,8 @@ static bool readShaderSource(GLuint shader, const char *name)
     file.seekg(0L, std::ios::beg);
     file.read(buffer, length);
 
-    if (file.bad()) {
+    if (file.bad())
+    {
       // うまく読み込めなかった
       std::cerr << "Error: Could not read souce file: " << name << std::endl;
     }
@@ -219,7 +222,8 @@ static void printShaderInfoLog(GLuint shader)
   GLsizei bufSize;
   glGetShaderiv(shader, GL_INFO_LOG_LENGTH , &bufSize);
   
-  if (bufSize > 1) {
+  if (bufSize > 1)
+  {
     // シェーダのコンパイル時のログの内容を取得する
     GLchar *infoLog = new GLchar[bufSize];
     GLsizei length;
@@ -238,7 +242,8 @@ static void printProgramInfoLog(GLuint program)
   GLsizei bufSize;
   glGetProgramiv(program, GL_INFO_LOG_LENGTH , &bufSize);
   
-  if (bufSize > 1) {
+  if (bufSize > 1)
+  {
     // シェーダのリンク時のログの内容を取得する
     GLchar *infoLog = new GLchar[bufSize];
     GLsizei length;
@@ -395,11 +400,13 @@ void gg::loadImage(const char *name, int width, int height, GLenum format)
   // テクスチャファイルを開く
   std::ifstream file(name, std::ios::binary);
 
-  if (file.fail()) {
+  if (file.fail())
+  {
     // 開けなかった
     std::cerr << "Waring: Can't open texture file: " << name << std::endl;
   }
-  else {
+  else
+  {
     // ファイルの末尾に移動し現在位置（＝ファイルサイズ）を得る
     file.seekg(0L, std::ios::end);
     GLsizei size = static_cast<GLsizei>(file.tellg());
@@ -412,7 +419,8 @@ void gg::loadImage(const char *name, int width, int height, GLenum format)
     file.seekg(0L, std::ios::beg);
     file.read(image, (size < maxsize) ? size : maxsize);
 
-    if (file.bad()) {
+    if (file.bad())
+    {
       // うまく読み込めなかった
       std::cerr << "Warning: Could not read texture file: " << name << std::endl;
     }
@@ -449,11 +457,13 @@ void gg::loadHeight(const char *name, int width, int height, float nz)
   // テクスチャファイルを開く
   std::ifstream file(name, std::ios::binary);
   
-  if (file.fail()) {
+  if (file.fail())
+  {
     // 開けなかった
     std::cerr << "Waring: Can't open texture file: " << name << std::endl;
   }
-  else {
+  else
+  {
     // ファイルの末尾に移動し現在位置（＝ファイルサイズ）を得る
     file.seekg(0L, std::ios::end);
     GLsizei size = static_cast<GLsizei>(file.tellg());
@@ -467,14 +477,16 @@ void gg::loadHeight(const char *name, int width, int height, float nz)
     file.seekg(0L, std::ios::beg);
     file.read(reinterpret_cast<char *>(hmap), (size < maxsize) ? size : maxsize);
     
-    if (file.bad()) {
+    if (file.bad())
+    {
       // うまく読み込めなかった
       std::cerr << "Warning: Could not read texture file: " << name << std::endl;
     }
     file.close();
     
     // 法線マップの作成
-    for (int i = 0; i < maxsize; ++i) {
+    for (int i = 0; i < maxsize; ++i)
+    {
       int x = i % width, y = i - x;
       
       // 隣接する画素との値の差を法線ベクトルの成分に用いる

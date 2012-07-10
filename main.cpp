@@ -115,13 +115,15 @@ static void makeSphere(float radius, int slices, int stacks,
   GLfloat (*pv)[3], GLfloat (*nv)[3], GLfloat (*tv)[2], GLuint (*f)[3])
 {
   // 頂点の位置とテクスチャ座標を求める
-  for (int k = 0, j = 0; j <= stacks; ++j) {
+  for (int k = 0, j = 0; j <= stacks; ++j)
+  {
     float t = (float)j / (float)stacks;
     float ph = 3.141593f * t;
     float y = cosf(ph);
     float r = sinf(ph);
 
-    for (int i = 0; i <= slices; ++i) {
+    for (int i = 0; i <= slices; ++i)
+    {
       float s = (float)i / (float)slices;
       float th = 2.0f * 3.141593f * s;
       float x = r * cosf(th);
@@ -146,8 +148,10 @@ static void makeSphere(float radius, int slices, int stacks,
   }
 
   // 面の指標を求める
-  for (int k = 0, j = 0; j < stacks; ++j) {
-    for (int i = 0; i < slices; ++i) {
+  for (int k = 0, j = 0; j < stacks; ++j)
+  {
+    for (int i = 0; i < slices; ++i)
+    {
       int count = (slices + 1) * j + i;
 
       /* 上半分 */
