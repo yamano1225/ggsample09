@@ -14,8 +14,8 @@ varying vec3 t;     // フラグメントシェーダに送る接線ベクトル
 
 void main(void)
 {
-  l = normalize(vec3(4.0, 8.0, 8.0));     // 光線ベクトル
   v = normalize((mw * pv).xyz);           // 視線ベクトル
+  l = normalize(vec3(4.0, 8.0, 8.0));     // 光線ベクトル
   n = normalize((mg * nv).xyz);           // 法線ベクトル
   t = normalize(vec3(-nv.z, 0.0, nv.x));  // 接線ベクトル
   gl_Position = mc * pv;
