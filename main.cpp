@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-  glutCreateWindow(argv[0]);
+  glutCreateWindow("ggsample09");
   glutDisplayFunc(display);
   glutReshapeFunc(resize);
   glutIdleFunc(idle);
