@@ -367,8 +367,12 @@ GLuint gg::loadShader(
 
       // ジオメトリシェーダが出力する頂点数を出力可能な値に設定する
       int vertices;
+#if defined(__APPLE__)
+      vertices = 64;
+#else
       glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT, &vertices);
-      glProgramParameteriEXT(program, GL_GEOMETRY_VERTICES_OUT_EXT, vertices);
+#endif
+      glProgramParameteriEXT(program, GL_GEOMETRY_VERTICES_OUT_EXT, 85);
     }
 
     // feedback に使う varying 変数を指定する
