@@ -366,13 +366,12 @@ GLuint gg::loadShader(
       glProgramParameteriEXT(program, GL_GEOMETRY_OUTPUT_TYPE_EXT, output);
 
       // ジオメトリシェーダが出力する頂点数を出力可能な値に設定する
-      int vertices;
-#if defined(__APPLE__)
-      vertices = 64;
-#else
+      int vertices, components;
       glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT, &vertices);
-#endif
-      glProgramParameteriEXT(program, GL_GEOMETRY_VERTICES_OUT_EXT, 85);
+      glGetIntegerv(GL_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS_EXT, &components);
+      components /= 12;  // 1 頂点あたり vec4 × 3 として
+      if (vertices > components) vertices = components;
+      glProgramParameteriEXT(program, GL_GEOMETRY_VERTICES_OUT_EXT, vertices);
     }
 
     // feedback に使う varying 変数を指定する
