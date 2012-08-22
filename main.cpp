@@ -4,8 +4,6 @@
 #include "gg.h"
 using namespace gg;
 
-#include "matrix.h"
-
 // プログラムオブジェクト
 static GLuint program;
 
@@ -16,7 +14,7 @@ static GLint pvLoc, nvLoc;
 static GLint mwLoc, mcLoc, mgLoc;
 
 // 透視投影変換行列
-static GLfloat mp[16];
+static GgMatrix mp;
 
 // アニメーションの周期
 #define CYCLE 10000
@@ -44,24 +42,22 @@ static void display(void)
   else t = (GLfloat)((glutGet(GLUT_ELAPSED_TIME) - firstTime) % CYCLE) / (GLfloat)CYCLE;
 
   // モデリング変換行列
-  GLfloat mm[16];
-  rotate(mm, 1.0f, 0.0f, 0.0f, 12.56637f * t);
+  GgMatrix mm;
+  mm.loadRotate(1.0f, 0.0f, 0.0f, 12.56637f * t);
 
   // 視野変換行列
-  GLfloat mv[16];
-  lookat(mv, 0.0f, 1.0f, 5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+  GgMatrix mv;
+  mv.loadLookat(0.0f, 1.0f, 5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
   
   // モデルビュー変換行列
-  GLfloat mw[16];
-  multiply(mw, mv, mm);
+  GgMatrix mw = mv * mm;
   
   // 法線変換行列
-  GLfloat mg[16];
-  normal(mg, mw);
+  GgMatrix mg;
+  mg.loadNormal(mw);
   
   // モデルビュー・投影変換
-  GLfloat mc[16];
-  multiply(mc, mp, mw);
+  GgMatrix mc = mp * mw;
   
   // 画面クリア
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -70,9 +66,9 @@ static void display(void)
   glUseProgram(program);
   
   // uniform 変数を設定する
-  glUniformMatrix4fv(mwLoc, 1, GL_FALSE, mw);
-  glUniformMatrix4fv(mcLoc, 1, GL_FALSE, mc);
-  glUniformMatrix4fv(mgLoc, 1, GL_FALSE, mg);
+  glUniformMatrix4fv(mwLoc, 1, GL_FALSE, mw.get());
+  glUniformMatrix4fv(mcLoc, 1, GL_FALSE, mc.get());
+  glUniformMatrix4fv(mgLoc, 1, GL_FALSE, mg.get());
   
   // attribute 変数 pv, nv, tv を配列変数から得ることを許可する
   glEnableVertexAttribArray(pvLoc);
@@ -97,7 +93,7 @@ static void resize(int w, int h)
   glViewport(0, 0, w, h);
   
   // 透視投影変換行列を求める（アスペクト比 w / h）
-  perspective(mp, 0.5f, (float)w / (float)h, 1.0f, 20.0f);
+  mp.loadPerspective(0.5f, (float)w / (float)h, 1.0f, 20.0f);
 }
 
 /*
