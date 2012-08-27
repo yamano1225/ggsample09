@@ -40,24 +40,10 @@ void gg::ggInit(void)
   if (atof(reinterpret_cast<const char *>(glGetString(GL_VERSION))) < 2.1)
   {
     std::cerr << "Error: This program requires OpenGL 2.1 or lator." << std::endl;
-    exit(1);
   }
 
   // Swap Interval の設定
-#if defined(X11)
-  Display *dpy = glXGetCurrentDisplay();
-  GLXDrawable drawable = glXGetCurrentDrawable();
-  if (drawable)
-  {
-    glXSwapIntervalEXT(dpy, drawable, 1);
-    return;
-  }
-#elif defined(__APPLE__)
-  int swap_interval = 1;
-  CGLContextObj cgl_context = CGLGetCurrentContext();
-  if (!CGLSetParameter(cgl_context, kCGLCPSwapInterval, &swap_interval))
-    return;
-#elif defined(WIN32)
+#if defined(WIN32)
   GLenum err = glewInit();
   if (err != GLEW_OK)
   {
@@ -71,6 +57,18 @@ void gg::ggInit(void)
     return;
   }
 #  endif
+#elif defined(__APPLE__)
+  int swap_interval = 1;
+  CGLContextObj cgl_context = CGLGetCurrentContext();
+  if (!CGLSetParameter(cgl_context, kCGLCPSwapInterval, &swap_interval)) return;
+#elif defined(X11)
+  Display *dpy = glXGetCurrentDisplay();
+  GLXDrawable drawable = glXGetCurrentDrawable();
+  if (drawable)
+  {
+    glXSwapIntervalEXT(dpy, drawable, 1);
+    return;
+  }
 #else
   std::cerr << "Warning: Could not set swap interval" << std::endl;
 #endif
@@ -167,8 +165,11 @@ void gg::ggFBOError(const char *msg)
 /*
 ** テクスチャマッピング用の RAW 画像ファイルの読み込み
 */
-void gg::loadImage(const char *name, int width, int height, GLenum format)
+bool gg::loadImage(const char *name, int width, int height, GLenum format)
 {
+  // 戻り値
+  bool ret = true;
+
   // テクスチャの読み込み先
   char *image = 0;
 
@@ -179,6 +180,7 @@ void gg::loadImage(const char *name, int width, int height, GLenum format)
   {
     // 開けなかった
     std::cerr << "Waring: Can't open texture file: " << name << std::endl;
+    ret = false;
   }
   else
   {
@@ -188,7 +190,14 @@ void gg::loadImage(const char *name, int width, int height, GLenum format)
 
     // テクスチャサイズ分のメモリを確保する
     GLsizei maxsize = width * height * ((format == GL_RGB) ? 3 : 4);
-    image = new char[maxsize];
+    try
+    {
+      image = new char[maxsize];
+    }
+    catch (std::bad_alloc e)
+    {
+      ret = false;
+    }
 
     // ファイルを先頭から読み込む
     file.seekg(0L, std::ios::beg);
@@ -198,6 +207,7 @@ void gg::loadImage(const char *name, int width, int height, GLenum format)
     {
       // うまく読み込めなかった
       std::cerr << "Warning: Could not read texture file: " << name << std::endl;
+      ret = false;
     }
     file.close();
   }
@@ -216,13 +226,18 @@ void gg::loadImage(const char *name, int width, int height, GLenum format)
 
   // 読み込みに使ったメモリを開放する
   delete[] image;
+
+  return ret;
 }
 
 /*
 ** 高さマップ用の RAW 画像ファイルの読み込んで法線マップを作成する
 */
-void gg::loadHeight(const char *name, int width, int height, float nz)
+bool gg::loadHeight(const char *name, int width, int height, float nz)
 {
+  // 戻り値
+  bool ret = true;
+
   // 作成する法線マップ
   GLfloat (*nmap)[4] = 0;
 
@@ -233,6 +248,7 @@ void gg::loadHeight(const char *name, int width, int height, float nz)
   {
     // 開けなかった
     std::cerr << "Waring: Can't open texture file: " << name << std::endl;
+    ret = false;
   }
   else
   {
@@ -249,8 +265,7 @@ void gg::loadHeight(const char *name, int width, int height, float nz)
     }
     catch (std::bad_alloc e) {
       delete[] hmap;
-      delete[] nmap;
-      throw e;
+      ret = false;
     }
 
     // ファイルを先頭から読み込む
@@ -261,11 +276,12 @@ void gg::loadHeight(const char *name, int width, int height, float nz)
     {
       // うまく読み込めなかった
       std::cerr << "Warning: Could not read texture file: " << name << std::endl;
+      ret = false;
     }
     file.close();
 
     // 法線マップの作成
-    for (int i = 0; i < maxsize; ++i)
+    for (GLsizei i = 0; i < maxsize; ++i)
     {
       int x = i % width, y = i - x;
 
@@ -301,6 +317,8 @@ void gg::loadHeight(const char *name, int width, int height, float nz)
 
   // 法線マップの作成に使ったメモリを解放する
   delete[] nmap;
+
+  return ret;
 }
 
 /*
@@ -400,8 +418,8 @@ GLuint gg::loadShader(
   const char *geom,       // ジオメトリシェーダのソースファイル名
   GLenum input,           // ジオメトリシェーダの入力プリミティブ
   GLenum output,          // ジオメトリシェーダの出力プリミティブ
-  int vertices,           // ジオメトリシェーダの出力頂点数
-  int nvarying,           // Transform Feedback する varying 変数の数
+  GLint vertices,         // ジオメトリシェーダの出力頂点数
+  GLint nvarying,         // Transform Feedback する varying 変数の数
   const char **varyings   // Transform Feedback する varying 変数のリスト
   )
 {
@@ -556,8 +574,8 @@ void gg::GgMatrix::multiply(GLfloat *c, const GLfloat *a, const GLfloat *b) cons
 gg::GgMatrix &gg::GgMatrix::loadIdentity(void)
 {
   array[ 1] = array[ 2] = array[ 3] = array[ 4] =
-    array[ 6] = array[ 7] = array[ 8] = array[ 9] =
-    array[11] = array[12] = array[13] = array[14] = 0.0f;
+  array[ 6] = array[ 7] = array[ 8] = array[ 9] =
+  array[11] = array[12] = array[13] = array[14] = 0.0f;
   array[ 0] = array[ 5] = array[10] = array[15] = 1.0f;
 
   return *this;
@@ -573,8 +591,8 @@ gg::GgMatrix &gg::GgMatrix::loadTranslate(GLfloat x, GLfloat y, GLfloat z, GLflo
   array[14] = z;
   array[ 0] = array[ 5] = array[10] = array[15] = w;
   array[ 1] = array[ 2] = array[ 3] = array[ 4] =
-    array[ 6] = array[ 7] = array[ 8] = array[ 9] =
-    array[11] = 0.0f;
+  array[ 6] = array[ 7] = array[ 8] = array[ 9] =
+  array[11] = 0.0f;
 
   return *this;
 }
@@ -589,8 +607,8 @@ gg::GgMatrix &gg::GgMatrix::loadScale(GLfloat x, GLfloat y, GLfloat z, GLfloat w
   array[10] = z;
   array[15] = w;
   array[ 1] = array[ 2] = array[ 3] = array[ 4] =
-    array[ 6] = array[ 7] = array[ 8] = array[ 9] =
-    array[11] = array[12] = array[13] = array[14] = 0.0f;
+  array[ 6] = array[ 7] = array[ 8] = array[ 9] =
+  array[11] = array[12] = array[13] = array[14] = 0.0f;
 
   return *this;
 }
@@ -873,7 +891,7 @@ gg::GgMatrix &gg::GgMatrix::loadOrthogonal(GLfloat left, GLfloat right, GLfloat 
     array[14] = -(zFar + zNear) / dz;
     array[15] =  1.0f;
     array[ 1] = array[ 2] = array[ 3] = array[ 4] =
-      array[ 6] = array[ 7] = array[ 8] = array[ 9] = array[11] = 0.0f;
+    array[ 6] = array[ 7] = array[ 8] = array[ 9] = array[11] = 0.0f;
   }
 
   return *this;
@@ -898,7 +916,7 @@ gg::GgMatrix &gg::GgMatrix::loadFrustum(GLfloat left, GLfloat right, GLfloat bot
     array[11] = -1.0f;
     array[14] = -2.0f * zFar * zNear / dz;
     array[ 1] = array[ 2] = array[ 3] = array[ 4] =
-      array[ 6] = array[ 7] = array[12] = array[13] = array[15] = 0.0f;
+    array[ 6] = array[ 7] = array[12] = array[13] = array[15] = 0.0f;
   }
 
   return *this;
@@ -921,8 +939,8 @@ gg::GgMatrix &gg::GgMatrix::loadPerspective(GLfloat fovy, GLfloat aspect, GLfloa
     array[11] = -1.0f;
     array[14] = -2.0f * zFar * zNear / dz;
     array[ 1] = array[ 2] = array[ 3] = array[ 4] =
-      array[ 6] = array[ 7] = array[ 8] = array[ 9] =
-      array[12] = array[13] = array[15] = 0.0f;
+    array[ 6] = array[ 7] = array[ 8] = array[ 9] =
+    array[12] = array[13] = array[15] = 0.0f;
   }
 
   return *this;
@@ -1135,7 +1153,7 @@ GLfloat gg::GgQuaternion::norm(void) const
 */
 gg::GgQuaternion gg::GgQuaternion::conjugate(void) const
 {
-  GgQuaternion t(-this->array[0], -this->array[1], -this->array[2], this->array[3]);
+  GgQuaternion t(-array[0], -array[1], -array[2], array[3]);
 
   return t;
 }
@@ -1145,9 +1163,8 @@ gg::GgQuaternion gg::GgQuaternion::conjugate(void) const
 */
 gg::GgQuaternion gg::GgQuaternion::invert(void) const
 {
-  GgQuaternion t = this->conjugate();
-  GLfloat l = this->array[0] * this->array[0] + this->array[1] * this->array[1]
-  + this->array[2] * this->array[2] + this->array[3] * this->array[3];
+  GgQuaternion t = conjugate();
+  GLfloat l = array[0] * array[0] + array[1] * array[1] + array[2] * array[2] + array[3] * array[3];
 
   if (l > 0.0f)
   {
@@ -1166,7 +1183,7 @@ gg::GgQuaternion gg::GgQuaternion::invert(void) const
 gg::GgQuaternion gg::GgQuaternion::normalize(void) const
 {
   GgQuaternion t = *this;
-  GLfloat l = this->norm();
+  GLfloat l = norm();
 
   if (l > 0.0f)
   {
@@ -1348,7 +1365,13 @@ gg::GgPoints *gg::ggPointSphere(GLuint nv, GLfloat cx, GLfloat cy, GLfloat cz, G
     vert[v][2] = r * cp + cz;
   }
 
-  return new gg::GgPoints(nv, vert);
+  // ポイントの作成
+  GgPoints *points = new gg::GgPoints(nv, vert);
+  
+  // 作業用のメモリの解放
+  delete[] vert;
+  
+  return points;
 }
 
 /*
@@ -1366,20 +1389,10 @@ gg::GgPolygon *gg::ggRectangle(GLfloat width, GLfloat height)
   };
 
   // メモリの確保
-  GLfloat (*vert)[3] = 0;
-  GLfloat (*norm)[3] = 0;
-  try
-  {
-    vert = new GLfloat[4][3];
-    norm = new GLfloat[4][3];
-  }
-  catch (std::bad_alloc e)
-  {
-    delete[] vert;
-    delete[] norm;
-    throw e;
-  }
+  GLfloat vert[4][3];
+  GLfloat norm[4][3];
 
+  // 頂点位置の計算
   for (int v = 0; v < 4; ++v)
   {
     vert[v][0] = p[v][0] * width;
@@ -1391,6 +1404,7 @@ gg::GgPolygon *gg::ggRectangle(GLfloat width, GLfloat height)
     norm[v][2] = 1.0f;
   }
 
+  // ポリゴンの作成
   return new gg::GgPolygon(4, vert, norm);
 }
 
@@ -1414,6 +1428,7 @@ gg::GgPolygon *gg::ggEllipse(GLfloat width, GLfloat height, GLuint slices)
     throw e;
   }
 
+  // 頂点位置の計算
   for (GLuint v = 0; v < slices; ++v)
   {
     float t = 6.2831853f * (float)v / (float)slices;
@@ -1425,9 +1440,16 @@ gg::GgPolygon *gg::ggEllipse(GLfloat width, GLfloat height, GLuint slices)
     norm[v][0] = 0.0f;
     norm[v][1] = 0.0f;
     norm[v][2] = 1.0f;
-  }
+  } 
+  
+  // ポリゴンの作成
+  GgPolygon *ellipse = new gg::GgPolygon(slices, vert, norm);
 
-  return new gg::GgPolygon(slices, vert, norm);
+  // 作業用のメモリの解放
+  delete[] vert;
+  delete[] norm;
+
+  return ellipse;
 }
 
 /*
@@ -1445,7 +1467,7 @@ gg::GgObject *gg::ggObj(const char *name, bool normalize)
 
   // データの数と座標値の最小値・最大値を調べる
   char buf[1024];
-  int nv, nf;
+  unsigned int nv, nf;
   nv = nf = 0;
   float xmin, xmax, ymin, ymax, zmin, zmax;
   xmax = ymax = zmax = -(xmin = ymin = zmin = FLT_MAX);
@@ -1472,22 +1494,22 @@ gg::GgObject *gg::ggObj(const char *name, bool normalize)
   // メモリの確保
   GLfloat (*vert)[3] = 0;
   GLfloat (*norm)[3] = 0;
-  GLfloat (*fnorm)[3] = 0;
   GLuint (*face)[3] = 0;
+  GLfloat (*fnorm)[3] = 0;
   try
   {
     vert = new GLfloat[nv][3];
     norm = new GLfloat[nv][3];
-    fnorm = new GLfloat[nf][3];
     face = new GLuint[nf][3];
+    fnorm = new GLfloat[nf][3];
   }
   catch (std::bad_alloc e)
   {
     delete[] vert;
     delete[] norm;
-    delete[] fnorm;
     delete[] face;
-    throw e;
+    file.close();
+    return 0;
   }
 
   // 正規化
@@ -1540,14 +1562,16 @@ gg::GgObject *gg::ggObj(const char *name, bool normalize)
   }
 
   // 面法線ベクトルの算出
-  for (int f = 0; f < nf; ++f)
+  for (unsigned int f = 0; f < nf; ++f)
   {
-    GLfloat dx1 = vert[face[f][1]][0] - vert[face[f][0]][0];
-    GLfloat dy1 = vert[face[f][1]][1] - vert[face[f][0]][1];
-    GLfloat dz1 = vert[face[f][1]][2] - vert[face[f][0]][2];
-    GLfloat dx2 = vert[face[f][2]][0] - vert[face[f][0]][0];
-    GLfloat dy2 = vert[face[f][2]][1] - vert[face[f][0]][1];
-    GLfloat dz2 = vert[face[f][2]][2] - vert[face[f][0]][2];
+    GLuint v0 = face[f][0], v1 = face[f][1], v2 = face[f][2];
+
+    GLfloat dx1 = vert[v1][0] - vert[v0][0];
+    GLfloat dy1 = vert[v1][1] - vert[v0][1];
+    GLfloat dz1 = vert[v1][2] - vert[v0][2];
+    GLfloat dx2 = vert[v2][0] - vert[v0][0];
+    GLfloat dy2 = vert[v2][1] - vert[v0][1];
+    GLfloat dz2 = vert[v2][2] - vert[v0][2];
 
     // 外積
     fnorm[f][0] = dy1 * dz2 - dz1 * dy2;
@@ -1556,31 +1580,36 @@ gg::GgObject *gg::ggObj(const char *name, bool normalize)
   }
 
   // 頂点の法線ベクトルの値を 0 にしておく
-  for (int v = 0; v < nv; ++v)
+  for (unsigned int v = 0; v < nv; ++v)
     norm[v][0] = norm[v][1] = norm[v][2] = 0.0f;
 
   // 面の法線ベクトルを頂点の法線ベクトルに積算する
-  for (int f = 0; f < nf; ++f)
+  for (unsigned int f = 0; f < nf; ++f)
   {
-    norm[face[f][0]][0] += fnorm[f][0];
-    norm[face[f][0]][1] += fnorm[f][1];
-    norm[face[f][0]][2] += fnorm[f][2];
+    GLuint v0 = face[f][0], v1 = face[f][1], v2 = face[f][2];
 
-    norm[face[f][1]][0] += fnorm[f][0];
-    norm[face[f][1]][1] += fnorm[f][1];
-    norm[face[f][1]][2] += fnorm[f][2];
+    GLfloat x = fnorm[f][0];
+    GLfloat y = fnorm[f][1];
+    GLfloat z = fnorm[f][2];
 
-    norm[face[f][2]][0] += fnorm[f][0];
-    norm[face[f][2]][1] += fnorm[f][1];
-    norm[face[f][2]][2] += fnorm[f][2];
+    // 積算
+    norm[v0][0] += x;
+    norm[v0][1] += y;
+    norm[v0][2] += z;
+
+    norm[v1][0] += x;
+    norm[v1][1] += y;
+    norm[v1][2] += z;
+
+    norm[v2][0] += x;
+    norm[v2][1] += y;
+    norm[v2][2] += z;
   }
 
-  // 頂点の法線ベクトルを正規化する
-  for (int v = 0; v < nv; ++v)
+  // 頂点の法線ベクトルの正規化
+  for (unsigned int v = 0; v < nv; ++v)
   {
-    GLfloat a = sqrt(norm[v][0] * norm[v][0]
-    + norm[v][1] * norm[v][1]
-    + norm[v][2] * norm[v][2]);
+    GLfloat a = sqrt(norm[v][0] * norm[v][0] + norm[v][1] * norm[v][1] + norm[v][2] * norm[v][2]);
 
     if (a != 0.0)
     {
@@ -1590,8 +1619,14 @@ gg::GgObject *gg::ggObj(const char *name, bool normalize)
     }
   }
 
-  // 面の法線ベクトルは頂点の法線ベクトルの算出にしか使わないので解放
-  delete[] fnorm;
+  // オブジェクトの作成
+  GgObject *obj = new gg::GgObject(nv, vert, norm, nf, face);
 
-  return new gg::GgObject(nv, vert, norm, nf, face);
+  // 作業用のメモリの解放
+  delete[] vert;
+  delete[] norm;
+  delete[] face;
+  delete[] fnorm;
+  
+  return obj;
 }
