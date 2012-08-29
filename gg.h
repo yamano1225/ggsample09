@@ -27,7 +27,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __GG_H__
 
 #include <cstring>
-#include <cmath>
 
 #if defined(WIN32)
 #  pragma warning(disable:4996)
@@ -63,7 +62,7 @@ namespace gg
   ** OpenGL のエラーチェック
   **
   **     OpenGL の API を呼び出し直後に実行すればエラーのあるときにメッセージを表示する
-  **     msg はメッセージに乗じる文字列
+  **     msg はメッセージの頭に追加する文字列
   */
   extern void ggError(const char *msg = 0);
 
@@ -92,7 +91,7 @@ namespace gg
   /*
   ** テクスチャマッピング用の RAW 画像ファイルの読み込み
   */
-  extern bool loadImage(const char *name, int width, int height, GLenum format);
+  extern bool loadImage(const char *name, int width, int height, GLenum internal);
 
   /*
   ** 高さマップ用の RAW 画像ファイルの読み込んで法線マップを作成する
@@ -164,8 +163,10 @@ namespace gg
     }
     GgMatrix &multiply(const GLfloat *a)
     {
-      GLfloat t[16]; multiply(t, array, a);
-      memcpy(array, t, sizeof array); return *this;
+      GLfloat t[16];
+      multiply(t, array, a);
+      memcpy(array, t, sizeof array);
+      return *this;
     }
     GgMatrix &multiply(const GgMatrix &m)
     {
@@ -266,7 +267,9 @@ namespace gg
     // 平行移動変換を乗じる
     GgMatrix &translate(GLfloat x, GLfloat y, GLfloat z, GLfloat w = 1.0f)
     {
-      GgMatrix m; m.loadTranslate(x, y, z, w); multiply(m);
+      GgMatrix m;
+      m.loadTranslate(x, y, z, w);
+      multiply(m);
       return *this;
     }
     GgMatrix &translate(const GLfloat *t)
@@ -509,7 +512,8 @@ namespace gg
     // 回転の変換行列 m を表す四元数を設定する
     GgQuaternion &loadMatrix(const GLfloat *m)
     {
-      toQuaternion(array, m); return *this;
+      toQuaternion(array, m);
+      return *this;
     }
 
     // 単位元を設定する
@@ -589,7 +593,8 @@ namespace gg
     }
     GgQuaternion &multiply(const GLfloat *a)
     {
-      GLfloat t[4]; multiply(t, array, a);
+      GLfloat t[4];
+      multiply(t, array, a);
       return load(t);
     }
     GgQuaternion &multiply(const GgQuaternion &q)
@@ -809,6 +814,11 @@ namespace gg
     {
       glGenTextures(1, &texture);
     }
+    GgTexture(const char *name, int width, int height, GLenum internal = GL_RGB)
+    {
+      glGenTextures(1, &texture);
+      load(name, width, height, internal);
+    }
     GgTexture(const GgTexture &o)
       : GgAttribute(o), texture(o.texture) {}
 
@@ -824,10 +834,12 @@ namespace gg
     }
 
     // 拡散反射色テクスチャを読み込む
-    //     name: ファイル名, width, height: 幅と高さ (2^n), format: GL_RGB か GL_RGBA
-    void load(const char *name, int width, int height, GLenum format = GL_RGB) const
+    //     name: ファイル名, width, height: 幅と高さ (2^n), internal: GL_RGB か GL_RGBA
+    void load(const char *name, int width, int height, GLenum internal = GL_RGB) const
     {
-      loadImage(name, width, height, format);
+      glBindTexture(GL_TEXTURE_2D, texture);
+      loadImage(name, width, height, internal);
+      glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     // テクスチャオブジェクトを結合する
@@ -1032,7 +1044,7 @@ namespace gg
       return *this;
     }
 
-    // データを格納する
+    // バッファオブジェクトにデータを格納する
     void load(GLenum target, GLuint n, const T *data, GLenum usage = GL_STATIC_DRAW)
     {
       number = n;
@@ -1040,7 +1052,7 @@ namespace gg
       glBufferData(target, sizeof (T) * n, data, usage);
     }
 
-    // データを複写する
+    // バッファオブジェクトのデータを複写する
     void copy(GLuint buf)
     {
       const size_t size = sizeof (T) * number;
