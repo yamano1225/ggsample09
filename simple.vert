@@ -1,11 +1,12 @@
 #version 150 core
+#extension GL_ARB_explicit_attrib_location : enable
 
 // 光源
 const vec4 pl = vec4(3.0, 4.0, 5.0, 1.0);         // 位置
 
 // 頂点属性
-in vec4 pv;                                       // ローカル座標系の頂点位置
-in vec4 nv;                                       // 頂点の法線ベクトル
+layout (location = 0) in vec4 pv;                 // ローカル座標系の頂点位置
+layout (location = 1) in vec4 nv;                 // 頂点の法線ベクトル
 
 // 変換行列
 uniform mat4 mw;                                  // 視点座標系への変換行列

@@ -1,4 +1,5 @@
 #version 150 core
+#extension GL_ARB_explicit_attrib_location : enable
 
 // 光源
 const vec4 lamb   = vec4(0.2, 0.2, 0.2, 1.0);       // 環境光成分の強度
@@ -18,7 +19,7 @@ in vec3 h;                                          // 補間された中間ベクトル
 in vec2 t;                                          // 補間された接線ベクトル
 
 // フレームバッファに出力するデータ
-out vec4 fc;                                        // フラグメントの色
+layout (location = 0) out vec4 fc;                  // フラグメントの色
 
 void main(void)
 {
