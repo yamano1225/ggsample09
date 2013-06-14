@@ -1,5 +1,5 @@
 CXXFLAGS	= -I/usr/X11R6/include -DX11 -Wall
-LDLIBS	= -L/usr/X11R6/lib -lglut -lGLU -lGL -lm
+LDLIBS	= libglfw_linux.a -L/usr/X11R6/lib -lX11 -lGL -lXrandr -lrt -lpthread -lm
 OBJECTS	= $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 TARGET	= ggsample09
 
