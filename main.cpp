@@ -196,6 +196,8 @@ int main(int argc, const char * argv[])
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[3]);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof face, face, GL_STATIC_DRAW);
 
+  GgElements *sphere = ggElementsSphere(1.0f, 16, 8);
+
   // ウィンドウのサイズ変更時に呼び出す処理の設定
   glfwSetWindowSizeCallback(resize);
 
@@ -234,11 +236,13 @@ int main(int argc, const char * argv[])
     glUniformMatrix4fv(mgLoc, 1, GL_FALSE, mg.get());
 
     // 描画に使う頂点配列オブジェクトの指定
-    glBindVertexArray(vao);
+    //glBindVertexArray(vao);
 
     // 図形の描画
-    glDrawElements(GL_TRIANGLES, FACES * 3, GL_UNSIGNED_INT, 0);
+    //glDrawElements(GL_TRIANGLES, FACES * 3, GL_UNSIGNED_INT, 0);
 
+    sphere->draw();
+    
     // 頂点配列オブジェクトの指定解除
     glBindVertexArray(0);
 

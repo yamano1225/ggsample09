@@ -1805,9 +1805,6 @@ namespace gg
     // 頂点配列オブジェクト
     GLuint vao;
 
-    // シェーダー
-    GgShader *shader;
-
     // 描画図形
     GLenum mode;
 
@@ -1822,13 +1819,13 @@ namespace gg
 
     // コンストラクタ
     GgShape(void)
-      : shader(0), mode(GL_POINTS)
+      : mode(GL_POINTS)
     {
       glGenVertexArrays(1, &vao);
       glBindVertexArray(vao);
     }
     GgShape(const GgShape &o)
-      : vao(o.vao), shader(o.shader), mode(o.mode)
+      : vao(o.vao), mode(o.mode)
     {
       glBindVertexArray(vao);
     }
@@ -1840,7 +1837,6 @@ namespace gg
       {
         vao = o.vao;
         glBindVertexArray(vao);
-        attachShader(o.shader);
         mode = o.mode;
       }
       return *this;
@@ -1856,24 +1852,6 @@ namespace gg
     GLuint get(void) const
     {
       return vao;
-    }
-
-    // 形状データにシェーダのインスタンス s を結合する
-    //    それまで結合されていたシェーダの参照カウントをデクリメントして 0 になったらそのシェーダを破棄する
-    //    新しいシェーダ s を結合して s の参照カウントをインクリメントする
-    void attachShader(GgShader *shader)
-    {
-      this->shader = shader;
-    }
-    void attachShader(GgShader &shader)
-    {
-      this->shader = &shader;
-    }
-
-    // この形状データで使用しているシェーダを取り出す
-    GgShader *getShader(void) const
-    {
-      return shader;
     }
 
     // 描画に使う基本図形を設定する
@@ -2163,6 +2141,11 @@ namespace gg
   ** 三角形分割された Alias OBJ ファイル (Elements 形式)
   */
   extern GgElements *ggElementsObj(const char *name, bool normalize = false);
+
+  /*
+  ** 球 (Elements 形式)
+  */
+  extern GgElements *ggElementsSphere(GLfloat radius = 1.0f, GLuint slices = 16, GLuint stacks = 8);
 }
 
 #endif

@@ -1743,7 +1743,7 @@ bool gg::ggLoadHeight(const char *name, float nz)
 /*
 ** 三角形分割された OBJ ファイルを読み込む
 */
-bool gg::ggLoadObj(const char *name, GLuint &nv, GLfloat (*&vert)[3], GLfloat (*&norm)[3], GLuint &nf, GLuint (*&face)[3], bool normalize)
+bool gg::ggLoadObj(const char *name, GLuint &nv, GLfloat (*&pos)[3], GLfloat (*&norm)[3], GLuint &nf, GLuint (*&face)[3], bool normalize)
 {
   // OBJ ファイルの読み込み
   std::ifstream file(name, std::ios::binary);
@@ -1798,21 +1798,21 @@ bool gg::ggLoadObj(const char *name, GLuint &nv, GLfloat (*&vert)[3], GLfloat (*
 
   // メモリの確保
   GLfloat (*fnorm)[3] = 0;
-  vert = norm = 0;
+  pos = norm = 0;
   face = 0;
   try
   {
-    vert = new GLfloat[nv][3];
+    pos = new GLfloat[nv][3];
     norm = new GLfloat[nv][3];
     face = new GLuint[nf][3];
     fnorm = new GLfloat[nf][3];
   }
   catch (std::bad_alloc e)
   {
-    delete[] vert;
+    delete[] pos;
     delete[] norm;
     delete[] face;
-    vert = norm = 0;
+    pos = norm = 0;
     face = 0;
     file.close();
     return false;
@@ -1860,9 +1860,9 @@ bool gg::ggLoadObj(const char *name, GLuint &nv, GLfloat (*&vert)[3], GLfloat (*
       str >> x >> y >> z;
 
       // 位置と大きさの正規化
-      vert[nv][0] = (x - cx) * scale;
-      vert[nv][1] = (y - cy) * scale;
-      vert[nv][2] = (z - cz) * scale;
+      pos[nv][0] = (x - cx) * scale;
+      pos[nv][1] = (y - cy) * scale;
+      pos[nv][2] = (z - cz) * scale;
 
       // 頂点数のカウント
       ++nv;
@@ -1899,12 +1899,12 @@ bool gg::ggLoadObj(const char *name, GLuint &nv, GLfloat (*&vert)[3], GLfloat (*
     GLuint v0 = face[f][0], v1 = face[f][1], v2 = face[f][2];
 
     // v1 - v0, v2 - v0 を求める
-    GLfloat dx1 = vert[v1][0] - vert[v0][0];
-    GLfloat dy1 = vert[v1][1] - vert[v0][1];
-    GLfloat dz1 = vert[v1][2] - vert[v0][2];
-    GLfloat dx2 = vert[v2][0] - vert[v0][0];
-    GLfloat dy2 = vert[v2][1] - vert[v0][1];
-    GLfloat dz2 = vert[v2][2] - vert[v0][2];
+    GLfloat dx1 = pos[v1][0] - pos[v0][0];
+    GLfloat dy1 = pos[v1][1] - pos[v0][1];
+    GLfloat dz1 = pos[v1][2] - pos[v0][2];
+    GLfloat dx2 = pos[v2][0] - pos[v0][0];
+    GLfloat dy2 = pos[v2][1] - pos[v0][1];
+    GLfloat dz2 = pos[v2][2] - pos[v0][2];
 
     // 外積により面法線を求める
     fnorm[f][0] = dy1 * dz2 - dz1 * dy2;
@@ -2008,12 +2008,12 @@ namespace gg
 */
 bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
   GLfloat (*&ka)[4], GLfloat (*&kd)[4], GLfloat (*&ks)[4], GLfloat *&kshi,
-  GLuint &nv, GLfloat (*&vert)[3], GLfloat (*&norm)[3], bool normalize)
+  GLuint &nv, GLfloat (*&pos)[3], GLfloat (*&norm)[3], bool normalize)
 {
   // ファイルパスからディレクトリ名を取り出す
   std::string path(name);
-  size_t pos = path.find_last_of("/\\");
-  std::string dirname = (pos == std::string::npos) ? "" : path.substr(pos + 1);
+  size_t base = path.find_last_of("/\\");
+  std::string dirname = (base == std::string::npos) ? "" : path.substr(base + 1);
 
   // OBJ ファイルの読み込み
   std::ifstream file(path.c_str());
@@ -2042,7 +2042,7 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
 
   // 読み込み用の一時記憶領域
   std::vector<vec> _norm;
-  std::vector<vtx> _vert;
+  std::vector<vtx> _pos;
   std::vector<fac> _face;
   std::vector<grp> _group;
 
@@ -2081,7 +2081,7 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
       if (v.pos.z > zmax) zmax = v.pos.z;
 
       // 頂点位置を記録する
-      _vert.push_back(v);
+      _pos.push_back(v);
     }
     else if (op == "vn")
     {
@@ -2250,7 +2250,7 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
   group = 0;
   ka = kd = ks = 0;
   kshi = 0;
-  vert = norm = 0;
+  pos = norm = 0;
   try
   {
     group = new GLuint[ng][2];
@@ -2258,7 +2258,7 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
     kd = new GLfloat[ng][4];
     ks = new GLfloat[ng][4];
     kshi = new GLfloat[ng];
-    vert = new GLfloat[nv][3];
+    pos = new GLfloat[nv][3];
     norm = new GLfloat[nv][3];
   }
   catch (std::bad_alloc e)
@@ -2268,12 +2268,12 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
     delete[] kd;
     delete[] ks;
     delete[] kshi;
-    delete[] vert;
+    delete[] pos;
     delete[] norm;
     group = 0;
     ka = kd = ks = 0;
     kshi = 0;
-    vert = norm = 0;
+    pos = norm = 0;
     return false;
   }
 
@@ -2305,12 +2305,12 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
     GLuint v0 = f->v[0], v1 = f->v[1], v2 = f->v[2];
 
     // v1 - v0, v2 - v0 を求める
-    GLfloat dx1 = _vert[v1].pos.x - _vert[v0].pos.x;
-    GLfloat dy1 = _vert[v1].pos.y - _vert[v0].pos.y;
-    GLfloat dz1 = _vert[v1].pos.z - _vert[v0].pos.z;
-    GLfloat dx2 = _vert[v2].pos.x - _vert[v0].pos.x;
-    GLfloat dy2 = _vert[v2].pos.y - _vert[v0].pos.y;
-    GLfloat dz2 = _vert[v2].pos.z - _vert[v0].pos.z;
+    GLfloat dx1 = _pos[v1].pos.x - _pos[v0].pos.x;
+    GLfloat dy1 = _pos[v1].pos.y - _pos[v0].pos.y;
+    GLfloat dz1 = _pos[v1].pos.z - _pos[v0].pos.z;
+    GLfloat dx2 = _pos[v2].pos.x - _pos[v0].pos.x;
+    GLfloat dy2 = _pos[v2].pos.y - _pos[v0].pos.y;
+    GLfloat dz2 = _pos[v2].pos.z - _pos[v0].pos.z;
 
     // 外積により面法線を求める
     f->norm.x = dy1 * dz2 - dz1 * dy2;
@@ -2319,7 +2319,7 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
   }
 
   // 頂点法線の値を 0 にしておく
-  for (std::vector<vtx>::iterator v = _vert.begin(); v != _vert.end(); ++v)
+  for (std::vector<vtx>::iterator v = _pos.begin(); v != _pos.end(); ++v)
   {
     v->norm.x = v->norm.y = v->norm.z = 0.0f;
   }
@@ -2336,21 +2336,21 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
     GLfloat z = f->norm.z;
 
     // 面法線を頂点法線に積算する
-    _vert[v0].norm.x += x;
-    _vert[v0].norm.y += y;
-    _vert[v0].norm.z += z;
+    _pos[v0].norm.x += x;
+    _pos[v0].norm.y += y;
+    _pos[v0].norm.z += z;
 
-    _vert[v1].norm.x += x;
-    _vert[v1].norm.y += y;
-    _vert[v1].norm.z += z;
+    _pos[v1].norm.x += x;
+    _pos[v1].norm.y += y;
+    _pos[v1].norm.z += z;
 
-    _vert[v2].norm.x += x;
-    _vert[v2].norm.y += y;
-    _vert[v2].norm.z += z;
+    _pos[v2].norm.x += x;
+    _pos[v2].norm.y += y;
+    _pos[v2].norm.z += z;
   }
 
   // 頂点法線の正規化
-  for (std::vector<vtx>::iterator v = _vert.begin(); v != _vert.end(); ++v)
+  for (std::vector<vtx>::iterator v = _pos.begin(); v != _pos.end(); ++v)
   {
     // 頂点法線の長さ
     GLfloat a = sqrt(v->norm.x * v->norm.x + v->norm.y * v->norm.y + v->norm.z * v->norm.z);
@@ -2389,17 +2389,17 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
       GLuint fv = f->v[i], fn = f->n[i];
 
       // 頂点座標を正規化して登録
-      vert[nv][0] = (_vert[fv].pos.x - cx) * scale;
-      vert[nv][1] = (_vert[fv].pos.y - cy) * scale;
-      vert[nv][2] = (_vert[fv].pos.z - cz) * scale;
+      pos[nv][0] = (_pos[fv].pos.x - cx) * scale;
+      pos[nv][1] = (_pos[fv].pos.y - cy) * scale;
+      pos[nv][2] = (_pos[fv].pos.z - cz) * scale;
 
       // 法線番号が 0 なら
       if (fn == 0)
       {
         // 頂点法線を保存する
-        norm[nv][0] = _vert[fv].norm.x;
-        norm[nv][1] = _vert[fv].norm.y;
-        norm[nv][2] = _vert[fv].norm.z;
+        norm[nv][0] = _pos[fv].norm.x;
+        norm[nv][1] = _pos[fv].norm.y;
+        norm[nv][2] = _pos[fv].norm.z;
       }
       else
       {
@@ -3418,14 +3418,8 @@ void gg::GgPoints::draw(void) const
   // 頂点配列オブジェクトを指定する
   use();
 
-  // シェーダプログラムの使用を開始する
-  getShader()->use();
-
   // 図形を描画する
   glDrawArrays(getMode(), 0, pnum());
-
-  // シェーダプログラムの使用を終了する
-  getShader()->unuse();
 }
 
 /*
@@ -3436,14 +3430,8 @@ void gg::GgTriangles::draw(void) const
   // 頂点配列オブジェクトを指定する
   use();
 
-  // シェーダプログラムの使用を開始する
-  getShader()->use();
-
   // 図形を描画する
   glDrawArrays(getMode(), 0, pnum());
-
-  // シェーダプログラムの使用を終了する
-  getShader()->unuse();
 }
 
 /*
@@ -3454,14 +3442,8 @@ void gg::GgElements::draw(void) const
   // 頂点配列オブジェクトを指定する
   use();
 
-  // シェーダプログラムの使用を開始する
-  getShader()->use();
-
   // 図形を描画する
   glDrawElements(getMode(), fnum() * 3, GL_UNSIGNED_INT, 0);
-
-  // シェーダプログラムの使用を終了する
-  getShader()->unuse();
 }
 
 /*
@@ -3470,7 +3452,7 @@ void gg::GgElements::draw(void) const
 gg::GgPoints *gg::ggPointSphere(GLuint nv, GLfloat cx, GLfloat cy, GLfloat cz, GLfloat radius)
 {
   // メモリの確保
-  GLfloat (*vert)[3] = new GLfloat[nv][3];
+  GLfloat (*pos)[3] = new GLfloat[nv][3];
 
   // 点の生成
   for (GLuint v = 0; v < nv; ++v)
@@ -3481,16 +3463,16 @@ gg::GgPoints *gg::ggPointSphere(GLuint nv, GLfloat cx, GLfloat cy, GLfloat cz, G
     float sp = sqrt(1.0f - cp * cp);
     float ct = cos(t), st = sin(t);
 
-    vert[v][0] = r * sp * ct + cx;
-    vert[v][1] = r * sp * st + cy;
-    vert[v][2] = r * cp + cz;
+    pos[v][0] = r * sp * ct + cx;
+    pos[v][1] = r * sp * st + cy;
+    pos[v][2] = r * cp + cz;
   }
 
   // ポイントの作成
-  GgPoints *points = new gg::GgPoints(nv, vert);
+  GgPoints *points = new gg::GgPoints(nv, pos);
 
   // 作業用のメモリの解放
-  delete[] vert;
+  delete[] pos;
 
   return points;
 }
@@ -3510,15 +3492,15 @@ gg::GgTriangles *gg::ggRectangle(GLfloat width, GLfloat height)
   };
 
   // メモリの確保
-  GLfloat vert[4][3];
+  GLfloat pos[4][3];
   GLfloat norm[4][3];
 
   // 頂点位置の計算
   for (int v = 0; v < 4; ++v)
   {
-    vert[v][0] = p[v][0] * width;
-    vert[v][1] = p[v][1] * height;
-    vert[v][2] = 0.0f;
+    pos[v][0] = p[v][0] * width;
+    pos[v][1] = p[v][1] * height;
+    pos[v][2] = 0.0f;
 
     norm[v][0] = 0.0f;
     norm[v][1] = 0.0f;
@@ -3526,7 +3508,7 @@ gg::GgTriangles *gg::ggRectangle(GLfloat width, GLfloat height)
   }
 
   // ポリゴンの作成
-  GgTriangles *rectangle = new gg::GgTriangles(4, vert, norm);
+  GgTriangles *rectangle = new gg::GgTriangles(4, pos, norm);
   rectangle->setMode(GL_TRIANGLE_FAN);
 
   return rectangle;
@@ -3538,16 +3520,16 @@ gg::GgTriangles *gg::ggRectangle(GLfloat width, GLfloat height)
 gg::GgTriangles *gg::ggEllipse(GLfloat width, GLfloat height, GLuint slices)
 {
   // メモリの確保
-  GLfloat (*vert)[3] = 0;
+  GLfloat (*pos)[3] = 0;
   GLfloat (*norm)[3] = 0;
   try
   {
-    vert = new GLfloat[slices][3];
+    pos = new GLfloat[slices][3];
     norm = new GLfloat[slices][3];
   }
   catch (std::bad_alloc e)
   {
-    delete[] vert;
+    delete[] pos;
     delete[] norm;
     throw e;
   }
@@ -3557,9 +3539,9 @@ gg::GgTriangles *gg::ggEllipse(GLfloat width, GLfloat height, GLuint slices)
   {
     float t = 6.2831853f * static_cast<float>(v) / static_cast<float>(slices);
 
-    vert[v][0] = cos(t) * width * 0.5f;
-    vert[v][1] = sin(t) * height * 0.5f;
-    vert[v][2] = 0.0f;
+    pos[v][0] = cos(t) * width * 0.5f;
+    pos[v][1] = sin(t) * height * 0.5f;
+    pos[v][2] = 0.0f;
 
     norm[v][0] = 0.0f;
     norm[v][1] = 0.0f;
@@ -3567,11 +3549,11 @@ gg::GgTriangles *gg::ggEllipse(GLfloat width, GLfloat height, GLuint slices)
   } 
 
   // ポリゴンの作成
-  GgTriangles *ellipse = new gg::GgTriangles(slices, vert, norm);
+  GgTriangles *ellipse = new gg::GgTriangles(slices, pos, norm);
   ellipse->setMode(GL_TRIANGLE_FAN);
 
   // 作業用のメモリの解放
-  delete[] vert;
+  delete[] pos;
   delete[] norm;
 
   return ellipse;
@@ -3585,12 +3567,12 @@ gg::GgTriangles *gg::ggArraysObj(const char *name, bool normalize)
   GLuint ng, nv;
   GLuint (*group)[2];
   GLfloat (*ka)[4], (*kd)[4], (*ks)[4], *kshi;
-  GLfloat (*vert)[3], (*norm)[3];
+  GLfloat (*pos)[3], (*norm)[3];
 
-  if (!ggLoadObj(name, ng, group, ka, kd, ks, kshi, nv, vert, norm, normalize)) return 0;
+  if (!ggLoadObj(name, ng, group, ka, kd, ks, kshi, nv, pos, norm, normalize)) return 0;
 
   // オブジェクトの作成
-  GgTriangles *obj = new gg::GgTriangles(nv, vert, norm);
+  GgTriangles *obj = new gg::GgTriangles(nv, pos, norm);
 
   // 作業用のメモリの解放
   delete[] group;
@@ -3598,7 +3580,7 @@ gg::GgTriangles *gg::ggArraysObj(const char *name, bool normalize)
   delete[] kd;
   delete[] ks;
   delete[] kshi;
-  delete[] vert;
+  delete[] pos;
   delete[] norm;
 
   return obj;
@@ -3610,16 +3592,104 @@ gg::GgTriangles *gg::ggArraysObj(const char *name, bool normalize)
 gg::GgElements *gg::ggElementsObj(const char *name, bool normalize)
 {
   GLuint nv, nf;
-  GLfloat (*vert)[3], (*norm)[3];
+  GLfloat (*pos)[3], (*norm)[3];
   GLuint (*face)[3];
 
-  if (!ggLoadObj(name, nv, vert, norm, nf, face, normalize)) return 0;
+  if (!ggLoadObj(name, nv, pos, norm, nf, face, normalize)) return 0;
 
   // オブジェクトの作成
-  GgElements *obj = new gg::GgElements(nv, vert, norm, nf, face);
+  GgElements *obj = new gg::GgElements(nv, pos, norm, nf, face);
 
   // 作業用のメモリの解放
-  delete[] vert;
+  delete[] pos;
+  delete[] norm;
+  delete[] face;
+
+  return obj;
+}
+
+/*
+** 球 (Elements 形式)
+*/
+gg::GgElements *gg::ggElementsSphere(GLfloat radius, GLuint slices, GLuint stacks)
+{
+  // 球のデータの頂点数と面数
+  GLuint nv = (slices + 1) * (stacks + 1);
+  GLuint nf = slices * slices * 2;
+
+  // メモリの確保
+  GLfloat (*pos)[3] = 0;
+  GLfloat (*norm)[3] = 0;
+  GLuint (*face)[3] = 0;
+  try
+  {
+    pos = new GLfloat[nv][3];
+    norm = new GLfloat[nv][3];
+    face = new GLuint[nf][3];
+  }
+  catch (std::bad_alloc e)
+  {
+    delete[] pos;
+    delete[] norm;
+    delete[] face;
+    throw e;
+  }
+
+  // 頂点の位置とテクスチャ座標を求める
+  for (int k = 0, j = 0; j <= stacks; ++j)
+  {
+    float t = (float)j / (float)stacks;
+    float ph = 3.141593f * t;
+    float y = cosf(ph);
+    float r = sinf(ph);
+
+    for (int i = 0; i <= slices; ++i)
+    {
+      float s = (float)i / (float)slices;
+      float th = -2.0f * 3.141593f * s;
+      float x = r * cosf(th);
+      float z = r * sinf(th);
+
+      // 頂点の座標値
+      pos[k][0] = x * radius;
+      pos[k][1] = y * radius;
+      pos[k][2] = z * radius;
+
+      // 頂点の法線ベクトル
+      norm[k][0] = x;
+      norm[k][1] = y;
+      norm[k][2] = z;
+
+      ++k;
+    }
+  }
+
+  // 面の指標を求める
+  for (int k = 0, j = 0; j < stacks; ++j)
+  {
+    for (int i = 0; i < slices; ++i)
+    {
+      int count = (slices + 1) * j + i;
+
+      // 上半分の三角形
+      face[k][0] = count;
+      face[k][1] = count + slices + 2;
+      face[k][2] = count + 1;
+      ++k;
+
+      // 下半分の三角形
+      face[k][0] = count;
+      face[k][1] = count + slices + 1;
+      face[k][2] = count + slices + 2;
+      ++k;
+    }
+  }
+
+  // オブジェクトの作成
+  GgElements *obj = new gg::GgElements(nv, pos, norm, nf, face);
+
+  // 作業用のメモリの解放
+  delete[] pos;
   delete[] norm;
   delete[] face;
 
