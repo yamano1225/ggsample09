@@ -1,2 +1,2 @@
-gg.o: gg.cpp gg.h
-main.o: main.cpp gg.h
+gg.o: gg.cpp gg.h glfw.h glext.h
+main.o: main.cpp gg.h glfw.h glext.h
