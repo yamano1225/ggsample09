@@ -3067,53 +3067,37 @@ gg::GgMatrix &gg::GgMatrix::loadPerspective(GLfloat fovy, GLfloat aspect, GLfloa
 /*
 ** 変換行列：ビュー変換行列を乗じる（視点の移動）
 */
-gg::GgMatrix &gg::GgMatrix::lookat(GLfloat ex, GLfloat ey, GLfloat ez, GLfloat tx, GLfloat ty, GLfloat tz, GLfloat ux, GLfloat uy, GLfloat uz)
+gg::GgMatrix gg::GgMatrix::lookat(GLfloat ex, GLfloat ey, GLfloat ez, GLfloat tx, GLfloat ty, GLfloat tz, GLfloat ux, GLfloat uy, GLfloat uz) const
 {
   GgMatrix m;
-
-  m.loadLookat(ex, ey, ez, tx, ty, tz, ux, uy, uz);
-  multiply(m);
-
-  return *this;
+  return multiply(m.loadLookat(ex, ey, ez, tx, ty, tz, ux, uy, uz));
 }
 
 /*
 ** 変換行列：平行投影変換行列を乗じる
 */
-gg::GgMatrix &gg::GgMatrix::orthogonal(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+gg::GgMatrix gg::GgMatrix::orthogonal(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar) const
 {
   GgMatrix m;
-
-  m.loadOrthogonal(left, right, bottom, top, zNear, zFar);
-  multiply(m);
-
-  return *this;
+  return multiply(m.loadOrthogonal(left, right, bottom, top, zNear, zFar));
 }
 
 /*
 ** 変換行列：透視投影変換行列を乗じる
 */
-gg::GgMatrix &gg::GgMatrix::frustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+gg::GgMatrix gg::GgMatrix::frustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar) const
 {
   GgMatrix m;
-
-  m.loadFrustum(left, right, bottom, top, zNear, zFar);
-  multiply(m);
-
-  return *this;
+  return multiply(m.loadFrustum(left, right, bottom, top, zNear, zFar));
 }
 
 /*
 ** 変換行列：画角から求めた透視投影変換行列を乗じる
 */
-gg::GgMatrix &gg::GgMatrix::perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar)
+gg::GgMatrix gg::GgMatrix::perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar) const
 {
   GgMatrix m;
-
-  m.loadPerspective(fovy, aspect, zNear, zFar);
-  multiply(m);
-
-  return *this;
+  return multiply(m.loadPerspective(fovy, aspect, zNear, zFar));
 }
 
 /*
@@ -3379,12 +3363,8 @@ void gg::GgTrackball::motion(int x, int y)
 
     if (a != 0.0)
     {
-      // 回転軸と回転角から四元数を作る
-      GgQuaternion dq;
-      dq.loadRotate(dy, dx, 0.0f, a * 6.283185f);
-
-      // 現在の回転の四元数に作った四元数を掛けて合成する
-      tq = dq * cq;
+      // 現在の回転の四元数を回転軸と回転角を指定して回転する
+      tq = cq.rotate(dy, dx, 0.0f, a * 6.283185f);
 
       // 合成した四元数から回転の変換行列を求める
       tq.getMatrix(rt);
@@ -3609,11 +3589,11 @@ gg::GgElements *gg::ggElementsObj(const char *name, bool normalize)
 }
 
 /*
-** 球 (Elements 形式)
+** メッシュ (Elements 形式)
 */
-gg::GgElements *gg::ggElementsSphere(GLfloat radius, GLuint slices, GLuint stacks)
+gg::GgElements *gg::ggElementsMesh(GLfloat width, GLfloat height, int slices, int stacks)
 {
-  // 球のデータの頂点数と面数
+  // 頂点数と面数
   GLuint nv = (slices + 1) * (stacks + 1);
   GLuint nf = slices * slices * 2;
 
@@ -3635,7 +3615,89 @@ gg::GgElements *gg::ggElementsSphere(GLfloat radius, GLuint slices, GLuint stack
     throw e;
   }
 
-  // 頂点の位置とテクスチャ座標を求める
+  // 頂点の位置と法線ベクトルを求める
+  for (int k = 0, j = 0; j <= stacks; ++j)
+  {
+    GLfloat y = (GLfloat)j / (GLfloat)stacks;
+
+    for (int i = 0; i <= slices; ++i)
+    {
+      GLfloat x = (GLfloat)i / (GLfloat)slices;
+
+      // 頂点の座標値
+      pos[k][0] = x;
+      pos[k][1] = y;
+      pos[k][2] = 0.0f;
+
+      // 頂点の法線ベクトル
+      norm[k][0] = 0.0f;
+      norm[k][1] = 0.0f;
+      norm[k][2] = 1.0f;
+
+      ++k;
+    }
+  }
+
+  // 面の指標を求める
+  for (int k = 0, j = 0; j < stacks; ++j)
+  {
+    for (int i = 0; i < slices; ++i)
+    {
+      int count = (slices + 1) * j + i;
+
+      // 上半分の三角形
+      face[k][0] = count;
+      face[k][1] = count + slices + 2;
+      face[k][2] = count + 1;
+      ++k;
+
+      // 下半分の三角形
+      face[k][0] = count;
+      face[k][1] = count + slices + 1;
+      face[k][2] = count + slices + 2;
+      ++k;
+    }
+  }
+
+  // オブジェクトの作成
+  GgElements *obj = new gg::GgElements(nv, pos, norm, nf, face);
+
+  // 作業用のメモリの解放
+  delete[] pos;
+  delete[] norm;
+  delete[] face;
+
+  return obj;
+}
+
+/*
+** 球 (Elements 形式)
+*/
+gg::GgElements *gg::ggElementsSphere(GLfloat radius, int slices, int stacks)
+{
+  // 頂点数と面数
+  GLuint nv = (slices + 1) * (stacks + 1);
+  GLuint nf = slices * slices * 2;
+
+  // メモリの確保
+  GLfloat (*pos)[3] = 0;
+  GLfloat (*norm)[3] = 0;
+  GLuint (*face)[3] = 0;
+  try
+  {
+    pos = new GLfloat[nv][3];
+    norm = new GLfloat[nv][3];
+    face = new GLuint[nf][3];
+  }
+  catch (std::bad_alloc e)
+  {
+    delete[] pos;
+    delete[] norm;
+    delete[] face;
+    throw e;
+  }
+
+  // 頂点の位置と法線ベクトルを求める
   for (int k = 0, j = 0; j <= stacks; ++j)
   {
     float t = (float)j / (float)stacks;
