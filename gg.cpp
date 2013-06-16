@@ -1644,7 +1644,7 @@ bool gg::ggLoadImage(const char *name, GLenum internal)
 /*
 ** 高さマップ用の TGA 画像ファイルの読み込んで法線マップを作成する
 */
-bool gg::ggLoadHeight(const char *name, float nz)
+bool gg::ggLoadHeight(const char *name, float nz, GLenum internal)
 {
   // 画像サイズ
   GLsizei width, height;
@@ -1713,10 +1713,27 @@ bool gg::ggLoadHeight(const char *name, float nz)
     float nl = sqrt(nx * nx + ny * ny + nz * nz);
 
     // 法線を求める
-    nmap[i][0] = nx * 0.5f / nl + 0.5f;
-    nmap[i][1] = ny * 0.5f / nl + 0.5f;
-    nmap[i][2] = nz * 0.5f / nl + 0.5f;
-    nmap[i][3] = hmap[o] * 0.0039215686f; // == 1/255
+    nmap[i][0] = nx / nl;
+    nmap[i][1] = ny / nl;
+    nmap[i][2] = nz / nl;
+    nmap[i][3] = hmap[o];
+  }
+
+  // 内部フォーマットが浮動小数点テクスチャでなければ [0,1] に変換する
+  if (
+    internal != GL_RGB16F  &&
+    internal != GL_RGBA16F &&
+    internal != GL_RGB32F  &&
+    internal != GL_RGBA32F
+    )
+  {
+    for (GLsizei i = 0; i < maxsize; ++i)
+    {
+      nmap[i][0] = nmap[i][0] * 0.5f + 0.5f;
+      nmap[i][1] = nmap[i][1] * 0.5f + 0.5f;
+      nmap[i][2] = nmap[i][2] * 0.5f + 0.5f;
+      nmap[i][3] *= 0.0039215686f; // == 1/255
+    }
   }
 
   // 高さマップの読み込みに使ったメモリを開放する
@@ -1726,7 +1743,7 @@ bool gg::ggLoadHeight(const char *name, float nz)
   glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
   // テクスチャを割り当てる
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, nmap);
+  glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, GL_RGBA, GL_FLOAT, nmap);
 
   // バイリニア（ミップマップなし），エッジでクランプ
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1743,7 +1760,8 @@ bool gg::ggLoadHeight(const char *name, float nz)
 /*
 ** 三角形分割された OBJ ファイルを読み込む
 */
-bool gg::ggLoadObj(const char *name, GLuint &nv, GLfloat (*&pos)[3], GLfloat (*&norm)[3], GLuint &nf, GLuint (*&face)[3], bool normalize)
+bool gg::ggLoadObj(const char *name, GLuint &nv, GLfloat (*&pos)[3], GLfloat (*&norm)[3],
+  GLuint &nf, GLuint (*&face)[3], bool normalize)
 {
   // OBJ ファイルの読み込み
   std::ifstream file(name, std::ios::binary);

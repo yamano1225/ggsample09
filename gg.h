@@ -748,7 +748,7 @@ namespace gg
   */
   extern bool ggLoadImage(                  // 読み込みできたら true
     const char *name,                       // 読み込むファイル名
-    GLenum internal                         // テクスチャメモリの内部フォーマット
+    GLenum internal = GL_RGB                // テクスチャメモリの内部フォーマット
     );
 
   /*
@@ -756,7 +756,8 @@ namespace gg
   */
   extern bool ggLoadHeight(                 // 読み込みできたら true
     const char *name,                       // 読み込むファイル名
-    float nz                                // 法線の z 軸の長さ
+    float nz,                               // 法線の z 軸の長さ
+    GLenum internal = GL_RGB                // テクスチャメモリの内部フォーマット
     );
 
   /*
@@ -769,7 +770,7 @@ namespace gg
     GLfloat (*&norm)[3],                    // 読み込んだデータの頂点法線
     GLuint &nf,                             // 読み込んだデータの三角形数
     GLuint (*&face)[3],                     // 読み込んだデータの三角形の頂点インデックス
-    bool normalize                          // true なら読み込んだデータの大きさを正規化する
+    bool normalize = false                  // true なら読み込んだデータの大きさを正規化する
     );
 
   /*
@@ -786,7 +787,7 @@ namespace gg
     GLuint &nv,                             // 読み込んだデータの頂点数
     GLfloat (*&vert)[3],                    // 読み込んだデータの頂点位置
     GLfloat (*&norm)[3],                    // 読み込んだデータの頂点法線
-    bool normalize                          // true なら読み込んだデータの大きさを正規化する
+    bool normalize = false                  // true なら読み込んだデータの大きさを正規化する
     );
 
   /*
