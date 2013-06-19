@@ -757,7 +757,7 @@ namespace gg
   extern bool ggLoadHeight(                 // 読み込みできたら true
     const char *name,                       // 読み込むファイル名
     float nz,                               // 法線の z 軸の長さ
-    GLenum internal = GL_RGB                // テクスチャメモリの内部フォーマット
+    GLenum internal = GL_RGBA               // テクスチャメモリの内部フォーマット
     );
 
   /*

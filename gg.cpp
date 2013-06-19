@@ -2059,8 +2059,8 @@ bool gg::ggLoadObj(const char *name, GLuint &ng, GLuint (*&group)[2],
   mtl[mtlname].kshi = 40.0f;
 
   // “Ç‚İ‚İ—p‚Ìˆê‹L‰¯—Ìˆæ
-  std::vector<vec> _norm;
   std::vector<vtx> _pos;
+  std::vector<vec> _norm;
   std::vector<fac> _face;
   std::vector<grp> _group;
 
@@ -3381,8 +3381,12 @@ void gg::GgTrackball::motion(int x, int y)
 
     if (a != 0.0)
     {
-      // Œ»İ‚Ì‰ñ“]‚ÌlŒ³”‚ğ‰ñ“]²‚Æ‰ñ“]Šp‚ğw’è‚µ‚Ä‰ñ“]‚·‚é
-      tq = cq.rotate(dy, dx, 0.0f, a * 6.283185f);
+      // ‰ñ“]²‚Æ‰ñ“]Šp‚©‚çlŒ³”‚ğì‚é
+      GgQuaternion dq;
+      dq.loadRotate(dy, dx, 0.0f, a * 6.283185f);
+
+      // Œ»İ‚Ì‰ñ“]‚ÌlŒ³”‚Éì‚Á‚½lŒ³”‚ğŠ|‚¯‚Ä‡¬‚·‚é
+      tq = dq * cq;
 
       // ‡¬‚µ‚½lŒ³”‚©‚ç‰ñ“]‚Ì•ÏŠ·s—ñ‚ğ‹‚ß‚é
       tq.getMatrix(rt);
