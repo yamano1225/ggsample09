@@ -25,7 +25,7 @@ void main(void)
   v = -normalize(p.xyz);                          // 視線ベクトル
   l = normalize(p.w * pl.xyz - pl.w * p.xyz);     // 光線ベクトル
   n = normalize((mg * nv).xyz);                   // 頂点の法線ベクトル
-  t = normalize(vec3(-nv.z, 0.0, nv.x));          // 接線ベクトル
+  t = normalize(vec3(-n.z, 0.0, n.x));            // 接線ベクトル
 
   gl_Position = mc * pv;
 }
