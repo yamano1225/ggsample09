@@ -14,18 +14,17 @@ uniform mat4 mc;                                  // ƒNƒŠƒbƒsƒ“ƒOÀ•WŒn‚Ö‚Ì•ÏŠ·
 uniform mat4 mg;                                  // –@üƒxƒNƒgƒ‹‚Ì•ÏŠ·s—ñ
 
 // ƒ‰ƒXƒ^ƒ‰ƒCƒU‚É‘—‚é’¸“_‘®«
+out vec3 v;                                       // ‹üƒxƒNƒgƒ‹
 out vec3 l;                                       // ŒõüƒxƒNƒgƒ‹
 out vec3 n;                                       // ’¸“_‚Ì–@üƒxƒNƒgƒ‹
-out vec3 h;                                       // ’†ŠÔƒxƒNƒgƒ‹
 out vec3 t;                                       // ÚüƒxƒNƒgƒ‹
 
 void main(void)
 {
   vec4 p = mw * pv;                               // ‹“_À•WŒn‚Ì’¸“_‚ÌˆÊ’u
-  vec3 v = -normalize(p.xyz);                     // ‹üƒxƒNƒgƒ‹
+  v = -normalize(p.xyz);                          // ‹üƒxƒNƒgƒ‹
   l = normalize(p.w * pl.xyz - pl.w * p.xyz);     // ŒõüƒxƒNƒgƒ‹
   n = normalize((mg * nv).xyz);                   // ’¸“_‚Ì–@üƒxƒNƒgƒ‹
-  h = normalize(l + v);                           // ’†ŠÔƒxƒNƒgƒ‹
   t = normalize(vec3(-nv.z, 0.0, nv.x));          // ÚüƒxƒNƒgƒ‹
 
   gl_Position = mc * pv;
